@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:20-bullseye
 
 # Update apt and install system dependencies required by Playwright
 # (Just in case the base image lacks some libraries, but playwright install should handle it)
