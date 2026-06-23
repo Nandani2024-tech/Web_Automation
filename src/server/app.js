@@ -97,7 +97,7 @@ app.post('/api/run', async (req, res) => {
 
 
 // Catch-all route to serve the React index.html for any other requests
-app.get('*', (req, res) => {
+app.get(/^\/.*$/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
