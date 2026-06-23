@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
+
 function App() {
   const [url, setUrl] = useState('https://ui.shadcn.com/docs/forms/react-hook-form');
   const [goal, setGoal] = useState('Locate the form elements on the page (Name/Username and Description fields), automatically fill them, and submit.');
@@ -9,31 +10,35 @@ function App() {
   const [screenshotUrl, setScreenshotUrl] = useState(null);
   const logsEndRef = useRef(null);
 
+
   // Auto-scroll logs
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
+
   // Setup SSE for logs
   useEffect(() => {
     const eventSource = new EventSource('/api/logs');
 
+
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setLogs((prev) => [...prev, data]);
-      
+     
       // Look for screenshot updates in logs
       if (data.message && data.message.includes('Screenshot saved to')) {
         const parts = data.message.split('screenshots');
         let filename = 'filled_form.png'; // fallback
         if (parts.length > 1) {
             // parts[1] will be something like \filled_form_screenshot.png
-            filename = parts[1].replace(/^[\\\/]/, ''); 
+            filename = parts[1].replace(/^[\\\/]/, '');
         }
-        // Force refresh by appending timestamp
-        setScreenshotUrl(`http://localhost:3001/screenshots/${filename}?t=${Date.now()}`);
+        // Force refresh by appending timestamp. Use relative path so it works in production!
+        setScreenshotUrl(`/screenshots/${filename}?t=${Date.now()}`);
         setStatus('idle');
       }
+
 
       // Check for completion or error
       if (data.message && (data.message.includes('Agent completed') || data.message.includes('Execution failed') || data.message.includes('Agent finished with errors'))) {
@@ -43,15 +48,18 @@ function App() {
       }
     };
 
+
     return () => {
       eventSource.close();
     };
   }, [status]);
 
+
   const handleStart = async () => {
     setStatus('running');
     setLogs([]); // Clear previous logs
     setScreenshotUrl(null);
+
 
     try {
       const response = await fetch('/api/run', {
@@ -62,16 +70,18 @@ function App() {
         body: JSON.stringify({ url, goal, provider }),
       });
 
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to start automation');
       }
-      
+     
     } catch (err) {
       setLogs(prev => [...prev, { level: 'error', message: err.message, timestamp: new Date().toISOString() }]);
       setStatus('error');
     }
   };
+
 
   return (
     <>
@@ -83,26 +93,28 @@ function App() {
         </div>
       </header>
 
+
       <div className="dashboard-container">
         {/* Sidebar Configuration */}
         <aside className="sidebar glass-panel">
           <h2>Parameters</h2>
-          
+         
           <div className="form-group">
             <label>Target Domain URL</label>
-            <input 
-              type="text" 
-              className="glass-input" 
+            <input
+              type="text"
+              className="glass-input"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={status === 'running'}
             />
           </div>
 
+
           <div className="form-group">
             <label>Execution Goal</label>
-            <textarea 
-              className="glass-input" 
+            <textarea
+              className="glass-input"
               rows="4"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
@@ -111,9 +123,10 @@ function App() {
             />
           </div>
 
+
           <div className="form-group">
             <label>Inference Engine</label>
-            <select 
+            <select
               className="glass-input glass-select"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
@@ -124,8 +137,9 @@ function App() {
             </select>
           </div>
 
-          <button 
-            className="glass-button" 
+
+          <button
+            className="glass-button"
             onClick={handleStart}
             disabled={status === 'running'}
             style={{ marginTop: 'auto' }}
@@ -134,9 +148,10 @@ function App() {
           </button>
         </aside>
 
+
         {/* Main Content Area */}
         <main className="main-content">
-          
+         
           {/* Mock Browser Frame */}
           <div className="mock-browser glass-panel">
             <div className="browser-header">
@@ -159,6 +174,7 @@ function App() {
             </div>
           </div>
 
+
           {/* Logs Panel */}
           <div className="logs-panel glass-panel">
             <div className="logs-header">
@@ -172,7 +188,7 @@ function App() {
                 logs.map((log, index) => {
                   const date = new Date(log.timestamp);
                   const timeStr = date.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' }) + '.' + date.getMilliseconds().toString().padStart(3, '0');
-                  
+                 
                   return (
                     <div key={index} className="log-entry">
                       <span className="log-time">[{timeStr}]</span>
@@ -186,10 +202,15 @@ function App() {
             </div>
           </div>
 
+
         </main>
       </div>
     </>
   );
 }
 
+
 export default App;
+
+
+
